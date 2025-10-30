@@ -20,5 +20,6 @@ export async function POST(request) {
   const body = await request.json();
   const result  = await claimRewards(body);
   console.log(result);
+  if(result === null) return Response.json({ result: null });
   return Response.json({ ...result });
 }

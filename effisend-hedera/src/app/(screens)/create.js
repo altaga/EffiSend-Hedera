@@ -1,17 +1,15 @@
 import { randomBytes, uuidV4 } from "ethers";
-import {
-    useNavigation
-} from "expo-router";
+import { useNavigation } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Toast } from "toastify-react-native";
 import CamFace from "../../components/camFace";
-import GlobalStyles, { secondaryColor } from "../../core/styles";
+import GlobalStyles, { mainColor, secondaryColor } from "../../core/styles";
 import { useStateAsync } from "../../core/useAsyncState";
 import {
-    setAsyncStorageValue,
-    setEncryptedStorageValue,
+  setAsyncStorageValue,
+  setEncryptedStorageValue,
 } from "../../core/utils";
 import ContextModule from "../../providers/contextModule";
 
@@ -140,7 +138,7 @@ export default function createOrRecover() {
           style={{
             height: "auto",
             width: "90%",
-            borderColor: secondaryColor,
+            borderColor: loading ? mainColor : secondaryColor,
             borderWidth: 5,
             borderRadius: 10,
             aspectRatio: 1,

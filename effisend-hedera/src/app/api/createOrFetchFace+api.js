@@ -12,7 +12,11 @@ async function createOrFetchFace(body) {
     redirect: "follow",
   };
   return new Promise((resolve) => {
-    fetchWithRetries(`${process.env.CREATE_OR_FETCH_FACEID_API}`, requestOptions)
+    fetchWithRetries(
+      `${process.env.CREATE_OR_FETCH_FACEID_API}`,
+      requestOptions,
+      { nullOnStatuses: [422] }
+    )
       .then((response) => response.json())
       .then((result) => resolve(result))
       .catch(() => resolve(null));
@@ -21,7 +25,8 @@ async function createOrFetchFace(body) {
 
 export async function POST(request) {
   const body = await request.json();
-  const { result } = await createOrFetchFace(body);
+  const result = await createOrFetchFace(body);
   console.log(result);
-  return Response.json({ result });
+  if(result === null) return Response.json({ result: null });
+  return Response.json({ ...result });
 }

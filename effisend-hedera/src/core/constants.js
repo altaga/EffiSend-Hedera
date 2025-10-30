@@ -38,7 +38,7 @@ const normalizeFontSize = (size) => {
 const w = normalizeFontSize(50);
 const h = normalizeFontSize(50);
 
-export const refreshTime = 1000 * 60 * 1;
+export const refreshTime = 1000 * 60 * 0.25;
 
 export const iconsBlockchain = {
   hbar: (
