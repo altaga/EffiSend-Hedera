@@ -1,7 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { fetch } from "expo/fetch";
-import React, { Fragment, useCallback, useRef, useState } from "react";
+import React, {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Image,
@@ -15,10 +20,7 @@ import {
 import GoogleWallet from "../../../assets/images/GW.png";
 import GlobalStyles, { mainColor } from "../../../core/styles";
 import { useStateAsync } from "../../../core/useAsyncState";
-import {
-  formatTimestamp,
-  getEncryptedStorageValue,
-} from "../../../core/utils";
+import { formatTimestamp, getEncryptedStorageValue } from "../../../core/utils";
 import ContextModule from "../../../providers/contextModule";
 
 export default function Tab4() {
@@ -27,10 +29,49 @@ export default function Tab4() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [inputHeight, setInputHeight] = useStateAsync("auto");
+  const ws = useRef(null);
+  // Ref to updates de value of context on web socket component
+  const contextRef = useRef(context.value);
+  useEffect(() => {
+    contextRef.current = context.value;
+  }, [context.value]);
+
+  useEffect(() => {
+    ws.current = new WebSocket(process.env.EXPO_PUBLIC_HCS10_AGENT_URL);
+
+    ws.current.onopen = () => {
+      console.log("Connected to server");
+    };
+    ws.current.onmessage = (e) => {
+      let temp = [...contextRef.current.chatGeneral];
+      const finalResponse = responseModifier(e.data);
+      console.log(finalResponse);
+      temp.push({
+        message: JSON.parse(finalResponse).message,
+        type: "system",
+        time: Date.now(),
+        tool: JSON.parse(finalResponse).last_tool,
+      });
+      context.setValue({
+        chatGeneral: temp,
+      });
+      setLoading(false);
+      setTimeout(() => scrollView.current.scrollToEnd({ animated: true }), 100);
+    };
+    ws.current.onerror = (e) => {
+      console.log("WebSocket error:", e.message);
+    };
+    ws.current.onclose = (e) => {
+      console.log("WebSocket closed:", e.code, e.reason);
+    };
+
+    // Cleanup on unmount
+    return () => {
+      ws.current && ws.current.close();
+    };
+  }, []);
 
   async function chatWithAgent(message) {
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
     const user = await getEncryptedStorageValue("user");
     const raw = JSON.stringify({
       message,
@@ -39,19 +80,9 @@ export default function Tab4() {
         user,
       },
     });
-
-    const requestOptions = {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    };
-    return new Promise((resolve) => {
-      fetch("/api/chatWithAgent", requestOptions)
-        .then((response) => response.json())
-        .then((result) => resolve(result))
-        .catch(() => resolve(null));
-    });
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(raw);
+    }
   }
 
   function responseModifier(response) {
@@ -79,22 +110,9 @@ export default function Tab4() {
       chatGeneral: temp,
     });
     scrollView.current.scrollToEnd({ animated: true });
-    const response = await chatWithAgent(message);
-    const finalResponse = responseModifier(response);
-    temp.push({
-      message: finalResponse.message,
-      type: "system",
-      time: Date.now(),
-      tool: response["last_tool"],
-    });
-    console.log(temp);
-    context.setValue({
-      chatGeneral: temp,
-    });
-    setLoading(false);
-    setTimeout(() => scrollView.current.scrollToEnd({ animated: true }), 100);
+    await chatWithAgent(message);
   }, [scrollView, context, message, setMessage, setLoading]);
-  
+
   return (
     <Fragment>
       <ScrollView

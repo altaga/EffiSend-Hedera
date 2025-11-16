@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "effisend-hedera",
-    "slug": "effisend-hedera",
+    "slug": "hedera-hcs10",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -42,7 +42,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "8a3ba37f-b8c5-4285-a2b8-1f86f59ec3c5"
+        "projectId": "4d389676-8214-4209-8b23-9f3445032580"
       }
     },
     "owner": "altaga"
