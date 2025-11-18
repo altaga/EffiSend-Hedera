@@ -8,8 +8,8 @@ EffiSend is a cutting-edge identity and payments platform built on **Hedera**. I
 
 ## 🔗 Fast Links
 
-- **WEB DAPP:** [LINK](https://effisend-hedera.expo.app/)
-- **VIDEO DEMO:** [LINK](http://youtu.be/ZO4d3-qJgDY)
+- **WEB DAPP:** [LINK](https://hedera-hcs10.expo.app/)
+- **VIDEO DEMO:** [LINK](pending...)
 
 ## ⚙️ System Architecture & Tech Stack
 
