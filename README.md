@@ -167,90 +167,246 @@ All technical implementations for this module are included here.
 - [**Create or Fetch Account**](./hedera-functions/hedera-fetch-or-create.js)
 - [**Claim Rewards**](./hedera-functions/hedera-claim.js)
 
-## 🤖 AI Agent (DeSmond)
+## 🤖 AI Agent Hub (DeSmond)
 
-The EffiSend platform features **DeSmond**, an AI agent built with **Langchain**. DeSmond understands natural language, allowing users to manage their finances conversationally.
+EffiSend has evolved from a single AI agent to a **multi-agent hub architecture** powered by **HCS10** (Hedera Consensus Service 10). This upgrade enables specialized agents to collaborate securely via Hedera's consensus layer, providing users with enhanced capabilities through natural conversation.
 
 <img src="./Images/agent1.png" width="32%"> <img src="./Images/agent2.png" width="32%"> <img src="./Images/agent3.png" width="32%">
 
-### Agent Tools & Capabilities
+### Multi-Agent Architecture
 
-DeSmond uses a graph-based workflow to conditionally execute tasks based on user intent. Its primary tools include:
+The system consists of three key components:
 
-  - **`transfer_tokens`**: Facilitates token transfers on the Hedera Mainnet.
-  - **`get_balance_hedera`**: Retrieves a user's current token balance on Hedera.
-  - **`list_of_tools`**: Informs the user about DeSmond's capabilities.
-  - **`fallback`**: Provides a friendly, conversational response when a user's intent is unclear.
+<img src="./Images/HCS10.drawio.png">
 
-### Special Menthod:
+- **Agent Hub**: Central coordinator that receives user requests via WebSocket and routes them to specialized agents through HCS10
+- **Specialized Agents**: Individual AI agents (like DeSmond) with domain-specific tools and capabilities
+- **HybridEncryption Library**: Custom RSA + AES-256-GCM encryption ensuring secure, tamper-proof communication between all agents
 
-In the case of the MetaMask Card fund, it is activated when the user requests to send USDC (hts) to a MetaMask Card.
+### Communication Flow
+
+The multi-agent system operates through a secure, four-step communication pipeline:
+
+#### 1. Client Layer (WebSocket Connection)
+
+The client establishes a WebSocket connection to the Agent Hub and sends user messages with contextual information.
+
+```javascript
+// Initialize WebSocket connection
+ws.current = new WebSocket(process.env.EXPO_PUBLIC_HCS10_AGENT_URL);
+
+// Send user message with context
+async function chatWithAgent(message) {
+  const user = await getEncryptedStorageValue("user");
+  const raw = JSON.stringify({
+    message,
+    context: {
+      accountId: context.value.accountId,
+      user,
+    },
+  });
+  if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+    ws.current.send(raw);
+  }
+}
+
+// Receive and display agent response
+ws.current.onmessage = (e) => {
+  const response = JSON.parse(e.data);
+  // Update UI with agent's message and tool used
+  chatHistory.push({
+    message: response.message,
+    type: "system",
+    tool: response.last_tool,
+  });
+};
+```
+
+**Reference:** [tab4.js](./agent/Client/tab4.js)
+
+#### 2. Agent Hub (Request Router & Encryptor)
+
+The hub receives WebSocket messages, generates unique request IDs, encrypts payloads using HybridEncryption, and forwards them to the appropriate specialized agent via HCS10.
+
+```javascript
+// Generate unique request ID for tracking
+const requestId = guid();
+pendingRequests.set(requestId, clientId);
+
+// Encrypt and send to specialized agent via HCS
+await handler.sendMessage(
+  {
+    requestId: requestId,
+    text: JSON.parse(textMessage),
+    from: MY_ACCOUNT_ID,
+  },
+  AGENT1_ACCOUNT_ID
+);
+
+// Listen for encrypted responses from agents
+handler.on("messageReceived", (event) => {
+  const { message, senderId } = event;
+  
+  // Route response back to original client
+  if (message.requestId && pendingRequests.has(message.requestId)) {
+    const wsId = pendingRequests.get(message.requestId);
+    const ws = idToWs.get(wsId);
+    
+    delete message.requestId;
+    ws.send(JSON.stringify(message));
+    pendingRequests.delete(message.requestId);
+  }
+});
+```
+
+**Reference:** [Agent Hub/index.js](./agent/Agent%20Hub/index.js)
+
+#### 3. Specialized Agent (AI Processing & Tool Execution)
+
+The agent receives encrypted messages via HCS10, decrypts them, processes the request using LangGraph with specialized tools, and sends the encrypted response back to the hub.
+
+```javascript
+// Decrypt incoming HCS message
+handler.on("messageReceived", async (processedMessage) => {
+  const { senderId, message } = processedMessage;
+  const { text: { message: userMessage, context }, requestId } = message;
+  
+  // Process with LangGraph workflow
+  const agentResponse = await invokeAgent(userMessage, context, graph);
+  
+  // Send encrypted response back to hub with original requestId
+  const replyPayload = {
+    ...agentResponse,
+    requestId: requestId,
+  };
+  
+  await handler.sendMessage(replyPayload, senderId);
+});
+
+// LangGraph workflow execution
+async function invokeAgent(message, contextData, graph) {
+  const input = setInput(message);
+  const context = config(contextData);
+  
+  const output = await graph.invoke(input, context);
+  const finalMessage = output.messages[output.messages.length - 1];
+  const tool = output.messages[2]?.["tool_calls"]?.[0]?.name ?? null;
+  
+  return { status: "success", message: finalMessage.content, last_tool: tool };
+}
+```
+
+**Reference:** [AgentN/index.js](./agent/AgentN/index.js)
+
+### Custom Encryption & Communication Library
+
+At the core of the multi-agent system is a **custom-built encryption and communication library** developed from scratch specifically for secure agent-to-agent messaging over HCS10. This library consists of two main components:
+
+#### HybridEncryption Class
+
+A production-ready encryption utility that combines the best of asymmetric and symmetric cryptography:
+
+**Key Features:**
+- **RSA-2048 + AES-256-GCM**: Uses RSA for secure key exchange and AES-GCM for fast data encryption with authentication
+- **Type Preservation**: Automatically serializes and deserializes data types (strings, objects, arrays, primitives)
+- **Authentication Tags**: Ensures data integrity and prevents tampering with GCM authentication
+- **Key Management**: Built-in utilities for generating, loading, and saving RSA key pairs
+
+```javascript
+// Encryption: Automatically handles any data type
+const encrypted = HybridEncryption.encrypt(
+  { message: "Transfer 100 USDC", amount: 100 },
+  recipientPublicKey
+);
+
+// Decryption: Returns original data type
+const decrypted = HybridEncryption.decrypt(encrypted, myPrivateKey);
+// Result: { message: "Transfer 100 USDC", amount: 100 }
+
+// Key pair generation
+const { publicKey, privateKey } = HybridEncryption.generateKeyPair(2048);
+```
+
+#### AgentCommunicationHandler Class
+
+An event-driven handler that manages HCS10 message monitoring, encryption/decryption, and agent authorization:
+
+**Key Features:**
+- **Event-Based Architecture**: Extends EventEmitter for reactive message handling
+- **Automatic Monitoring**: Continuously polls HCS topics for new messages with timestamp tracking
+- **Authorization Control**: Whitelist-based system to restrict communication to trusted agents
+- **Seamless Integration**: Works directly with HCS10Client for Hedera consensus
+
+```javascript
+// Initialize handler with encryption keys and authorized agents
+const handler = new AgentCommunicationHandler(
+  hcsClient,
+  CONNECTION_TOPIC_ID,
+  MY_ACCOUNT_ID,
+  myPrivateKey,
+  { [AGENT_ID]: agentPublicKey },
+  [AUTHORIZED_AGENT_1, AUTHORIZED_AGENT_2]
+);
+
+// Listen for decrypted messages
+handler.on("messageReceived", (event) => {
+  console.log(`From: ${event.senderId}`);
+  console.log(`Message:`, event.message);
+});
+
+// Send encrypted message to another agent
+await handler.sendMessage(
+  { action: "transfer", amount: 100 },
+  recipientAgentId
+);
+
+// Start monitoring HCS topic
+await handler.monitorConnectionMessages();
+```
+
+**Reference:** [lib.js](./agent/Agent%20Hub/lib.js)
+
+### Agent Capabilities
+
+DeSmond uses a **LangGraph** state machine with specialized tools:
+
+- **`transfer_tokens`**: Facilitates token transfers on Hedera Mainnet
+- **`get_balance_hedera`**: Retrieves current token balances for any HTS token
+- **`fund_metamask_card`**: Cross-chain USDC transfers from Hedera to Linea for MetaMask Card funding
+- **`list_of_tools`**: Provides information about available capabilities
+- **`fallback`**: Friendly conversational responses for general queries
+
+### Special Feature: MetaMask Card Integration
+
+When users request to fund their MetaMask Card, the agent executes a cross-chain transfer:
 
 <img src="./Images/final.drawio.png">
 
-- **`fundfund_metamask_card`**: Enables the user to fund their MetaMask card.
-
 ```javascript
-const fundMemamaskCard = tool(
-  async ({ amount, to }, { configurable: { user } }) => {
-    const response = await fetchURL(process.env.TOP_UP_PAYMENT_API, {
-      user,
-      amount,
-      to,
-    });
-    console.log(response);
-    if (response === null) {
-      return JSON.stringify({
-        status: "error",
-        message: "Transaction failed.",
-      });
-    }
-    const { hash } = response;
-    return JSON.stringify({
-      status: "success",
-      message: "Transaction created and available on your MetaMask Card.",
-      transaction: hash,
-    });
-  },
-  {
-    name: "fund_metamask_card",
-    description:
-      "This tool facilitates transfers where the specified amount is in USD, but the sending token is USDC on the Hedera Mainnet to USDC on Linea. It generates transaction data for the user to sign and activates when the user explicitly opts to send USD to a MetaMask Card or mentions relevant terms such as 'transfer,' 'USDC,' 'Hedera Mainnet,' or 'MetaMask Card' in the context of wallet activity.",
-    schema: z.object({
-      amount: z.string(),
-      to: z.string(),
-    }),
-  }
-);
-```
-
-- Code to send USDC(hts) to MetaMask Card
-
-```javascript
-...
-const client = Client.forMainnet();
-client.setOperator(accountId, privateKey);
-client.setDefaultMaxTransactionFee(new Hbar(100));
-client.setDefaultMaxQueryPayment(new Hbar(50));
-let transactionReceipt;
+// Transfer USDC from Hedera to Linea
 const transaction = await new TransferTransaction()
     .addTokenTransfer("0.0.456858", accountId, -amount * Math.pow(10, 6))
     .addTokenTransfer("0.0.456858", cloudAccountId, amount * Math.pow(10, 6))
     .freezeWith(client);
 const signTx = await transaction.sign(privateKey);
-const txResponse = await signTx.execute(client);
-...
-// Send tokent from our linea to address
-const transactionLinea = await contract.transfer(to,
-parseUnits(
-    amount,
-    6
-))
-await transactionLinea.wait()
-...
+await signTx.execute(client);
+
+// Bridge to Linea and fund MetaMask Card
+const transactionLinea = await contract.transfer(to, parseUnits(amount, 6));
+await transactionLinea.wait();
 ```
 
-All technical implementations for this module are included here.
+### Security & Scalability
 
-- [**Agent Code Snippets**](./agent/agent.js)
+- **End-to-End Encryption**: All agent communications use hybrid encryption (RSA-2048 + AES-256-GCM)
+- **Decentralized Consensus**: HCS10 ensures message integrity and persistence on Hedera
+- **Request Tracking**: Unique request IDs map responses back to originating clients
+- **Extensible Design**: New specialized agents can be added without modifying existing infrastructure
+
+All technical implementations for this module:
+
+- [**Agent Hub**](./agent/Agent%20Hub/index.js)
+- [**HybridEncryption Library**](./agent/Agent%20Hub/lib.js)
+- [**Specialized Agent (DeSmond)**](./agent/AgentN/index.js)
+- [**Client Chat Interface**](./agent/Client/tab4.js)
 - [**Fund MetaMask Card**](./hedera-functions/hedera-usdc-linea.js)
