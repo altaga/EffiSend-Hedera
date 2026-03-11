@@ -13,7 +13,7 @@ async function createOrFetchFace(body) {
   };
   return new Promise((resolve) => {
     fetchWithRetries(
-      `${process.env.CREATE_OR_FETCH_FACEID_API}`,
+      `${process.env.FACEID_API}fetchOrSave`,
       requestOptions,
       { nullOnStatuses: [422] }
     )

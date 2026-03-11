@@ -14,7 +14,7 @@ async function fetchFaceID(body) {
     retryDelay: 3000,
   };
   return new Promise((resolve) => {
-    fetchWithRetries(`${process.env.FETCH_FACEID_API}`, requestOptions)
+    fetchWithRetries(`${process.env.FACEID_API}fetch`, requestOptions)
       .then((response) => response.json())
       .then((result) => resolve(result))
       .catch(() => resolve(null));
