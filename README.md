@@ -2,14 +2,14 @@
 
 <p align="center">
 <img src="./Images/logo.png" width="20%">
-<p>
+</p>
 
 EffiSend is a cutting-edge identity, multichain wallet, and payments platform built on **Hedera**. It combines AI-powered **Face-ID** biometrics with an AI-driven agent for secure, seamless identity and finance management. By tokenizing verified interactions and ecosystem participation, EffiSend bridges trust, finance, and incentives—unlocking a new era of user engagement and rewards.
 
 ## 🔗 Fast Links
 
-- **WEB DAPP:** [LINK](https://effisend-tdc.expo.app/)
-- **VIDEO DEMO:** [LINK](pending...)
+  - **WEB DAPP:** [LINK](https://effisend-tdc.expo.app/)
+  - **VIDEO DEMO:** [LINK](pending...)
 
 ## ⚙️ System Architecture & Tech Stack
 
@@ -25,7 +25,7 @@ EffiSend is built from the ground up to leverage a modern Web3 infrastructure co
     Serves as the core distributed ledger powering all EffiSend transactions. Hedera's hashgraph consensus provides unparalleled speed, low-cost transactions, and fast finality, making it the ideal foundation for a high-throughput application like EffiSend.
 
   - [**AWS KMS (Key Management Service)**](https://aws.amazon.com/kms/)
-    Powers our enterprise-grade wallet security. Instead of storing raw private keys on the client, EffiSend uses AWS KMS to securely manage hardware-backed ECDSA keys. It signs Hedera transactions directly from our Lambda backend using a custom ECDSA_SHA_256 signer, ensuring private keys are never exposed.
+    Powers our enterprise-grade wallet security. Instead of storing raw private keys on the client, EffiSend uses AWS KMS to securely manage hardware-backed ECDSA keys. It signs Hedera transactions directly from our Lambda backend using a custom ECDSA\_SHA\_256 signer, ensuring private keys are never exposed.
 
   - [**AWS Rekognition**](https://aws.amazon.com/rekognition/)
     Drives our **Face-ID** verification system. AWS Rekognition provides highly accurate, real-time facial analysis and comparison, allowing users to securely link their **Tokyo Dome City passes** directly to their identity.
@@ -36,14 +36,16 @@ EffiSend is built from the ground up to leverage a modern Web3 infrastructure co
   - [**SAUCE**](https://www.saucerswap.finance/)
     The primary token for **rewards** within the EffiSend ecosystem. As the main utility token of SaucerSwap, the leading DEX on Hedera, SAUCE is deeply integrated into the community, driving user engagement.
 
-  - [**Langchain (AI Agent)**](https://lanchain.com/)
+  - [**LangChain (AI Agent)**](https://langchain.com/)
     The framework behind our AI agent, **DeSmond**. It enables natural language processing, allowing users to execute transfers, check balances, and perform complex workflows through simple conversation.
 
 ## 🤳 FaceID & Biometric Identity
 
 EffiSend provides a frictionless, seedless onboarding experience by linking a user’s unique biometric profile directly to their **Hedera** account. This system is specifically optimized for high-traffic environments like **Tokyo Dome City**, allowing users to securely link and manage their event passes using only their face.
 
+<p align="center">
 <img src="./Images/face1.png" width="32%"> <img src="./Images/face2.png" width="32%"> <img src="./Images/face3.png" width="32%">
+</p>
 
 The core of this identity layer is powered by **AWS Rekognition**, which provides enterprise-grade facial analysis and anti-spoofing to ensure that wallet access and transaction authorizations are both frictionless and highly secure.
 
@@ -51,12 +53,13 @@ The core of this identity layer is powered by **AWS Rekognition**, which provide
 
 The system utilizes a two-part validation workflow managed via a serverless AWS Lambda backend:
 
-* **`fetchOrSave`**: This endpoint first attempts to find an existing user within the **Effisend-Production-Face-DB** collection using a 90% confidence threshold. If no match is found, the system processes the image using **Jimp** for optimal resizing and securely indexes the new face, linking it to a unique **nonce** that serves as the user's permanent identity anchor.
-* **`fetch`**: Used for subsequent logins and high-security actions, such as payment authorizations. It performs a search-only operation to retrieve the matched identity; if no face is detected or no match is found, it returns a secure failure state.
+  * **`fetchOrSave`**: This endpoint first attempts to find an existing user within the **Effisend-Production-Face-DB** collection using a 90% confidence threshold. If no match is found, the system processes the image using **Jimp** for optimal resizing and securely indexes the new face, linking it to a unique **nonce** that serves as the user's permanent identity anchor.
+  * **`fetch`**: Used for subsequent logins and high-security actions, such as payment authorizations. It performs a search-only operation to retrieve the matched identity; if no face is detected or no match is found, it returns a secure failure state.
 
 ### FaceID Implementation Snippet (AWS Lambda)
 
 **Fetch or Save:**
+
 ```javascript
 // Executing search against the biometric collection
 const searchCommand = new SearchFacesByImageCommand({
@@ -109,11 +112,17 @@ if (path === '/fetch') {
 }
 ```
 
+All the technical details can be found here:
+
+  - [Rekognition Lambda Code](./amazonrekognition/index.js)
+
 ## 🌐 Unified Multichain Wallet Architecture
 
 EffiSend is designed as a **chain-agnostic ecosystem** that abstracts the complexities of multiple protocols into a single, biometric-secured interface. While **Hedera** is the primary backbone, the wallet seamlessly manages assets across **Base**, **Monad**, **Starknet**, and **Solana**.
 
+<p align="center">
 <img src="./Images/wallet1.png" width="32%"> <img src="./Images/wallet2.png" width="32%"> <img src="./Images/wallet3.png" width="32%">
+</p>
 
 ### Core Wallet Features:
 
@@ -138,6 +147,10 @@ const balancesResult = await Promise.all(
 );
 ```
 
+All the technical details can be found here:
+
+  - [Wallet Code](./effisend-hedera/src/app/(screens)/tabs/tab1.js)
+
 ## 💳 Payments & AWS KMS Security
 
 EffiSend leverages AWS Key Management Service (KMS) to provide enterprise-grade security for Hedera transactions. Instead of storing raw private keys on the mobile device, EffiSend utilizes hardware-backed ECDSA keys managed in the cloud. When a user is verified via FaceID, the backend resolves their unique identity to a specific KMS key alias, ensuring that private keys are never exposed during the signing process.
@@ -150,14 +163,14 @@ The system supports both native HBAR transfers and any token on the Hedera Token
 
 EffiSend allows merchants to seamlessly charge customers using only their biometric identity.
 
-1.   **Initiate Charge**: The merchant enters the requested USD amount into the app.
-2.   **Biometric Scan**: The customer’s face is scanned using the device camera to securely verify their identity.
+1.  **Initiate Charge**: The merchant enters the requested USD amount into the app.
+2.  **Biometric Scan**: The customer’s face is scanned using the device camera to securely verify their identity.
 
 <p align="center">
 <img src="./Images/payment1.png" width="32%"> <img src="./Images/payment2.png" width="32%"> <img src="./Images/payment3.png" width="32%">
 </p>
 
-3.   **Token Selection & Payment**: Upon successful verification, the system fetches the user's available balances and displays supported tokens that have sufficient funds. The user selects their preferred token, and the transaction is routed to the backend for secure KMS signing.
+3.  **Token Selection & Payment**: Upon successful verification, the system fetches the user's available balances and displays supported tokens that have sufficient funds. The user selects their preferred token, and the transaction is routed to the backend for secure KMS signing.
 
 <p align="center">
 <img src="./Images/payment4.png" width="32%"> <img src="./Images/payment5.png" width="32%"> <img src="./Images/payment6.png" width="32%">
@@ -165,26 +178,28 @@ EffiSend allows merchants to seamlessly charge customers using only their biomet
 
 ### Enterprise Signing Workflow:
 
-1.   **Identity Mapping**: The user's biometric "nonce" from AWS Rekognition is mapped to an AWS KMS Key Alias.
-2.   **KMS Signing**: The Lambda backend constructs the transaction and sends a digest to KMS. The SignCommand uses the ECDSA_SHA_256 algorithm to generate a secure signature.
-3.   **DER to Raw Conversion**: Since AWS KMS returns signatures in ASN.1 DER format, EffiSend includes a utility to strip the formatting and return the raw 64-byte signature required by the Hedera network.
-4.   **Audit Trail**: Every transaction signed via this method includes a transaction memo: "Signed by AWS KMS", providing a clear on-chain audit log.
+1.  **Identity Mapping**: The user's biometric "nonce" from AWS Rekognition is mapped to an AWS KMS Key Alias.
+2.  **KMS Signing**: The Lambda backend constructs the transaction and sends a digest to KMS. The SignCommand uses the ECDSA\_SHA\_256 algorithm to generate a secure signature.
+3.  **DER to Raw Conversion**: Since AWS KMS returns signatures in ASN.1 DER format, EffiSend includes a utility to strip the formatting and return the raw 64-byte signature required by the Hedera network.
+4.  **Audit Trail**: Every transaction signed via this method includes a transaction memo: `"Signed by AWS KMS"`, providing a clear on-chain audit log.
+
+<!-- end list -->
 
 ```javascript
 // hedera.js - Backend Transaction Execution
 const kmsSigner = async (message) => {
-    const digestHex = keccak256(message);
-    const digestBytes = Buffer.from(digestHex.slice(2), 'hex');
+    const digestHex = keccak256(message);
+    const digestBytes = Buffer.from(digestHex.slice(2), 'hex');
 
-    const signCommand = new SignCommand({
-        KeyId: kmsKeyAlias,
-        Message: digestBytes,
-        MessageType: "DIGEST",
-        SigningAlgorithm: "ECDSA_SHA_256"
-    });
-    const signResponse = await kmsClient.send(signCommand);
-    // Convert DER signature to raw 64-byte format for Hedera
-    return extractRawSignatureFromDER(Buffer.from(signResponse.Signature));
+    const signCommand = new SignCommand({
+        KeyId: kmsKeyAlias,
+        Message: digestBytes,
+        MessageType: "DIGEST",
+        SigningAlgorithm: "ECDSA_SHA_256"
+    });
+    const signResponse = await kmsClient.send(signCommand);
+    // Convert DER signature to raw 64-byte format for Hedera
+    return extractRawSignatureFromDER(Buffer.from(signResponse.Signature));
 };
 
 // Configure the Hedera Client to use the KMS Signer
@@ -192,18 +207,25 @@ client.setOperatorWith(hederaAccountId, kmsPublicKey, kmsSigner);
 
 // Execute HTS or Hbar Transfer
 const transaction = new TransferTransaction()
-    .addTokenTransfer(tokenId, senderId, -atomicAmount)
-    .addTokenTransfer(to, atomicAmount)
-    .setTransactionMemo("Signed by AWS KMS");
+    .addTokenTransfer(tokenId, senderId, -atomicAmount)
+    .addTokenTransfer(to, atomicAmount)
+    .setTransactionMemo("Signed by AWS KMS");
 
 const txResponse = await transaction.execute(client);
 ```
 
+All the technical details can be found here:
+
+  - [Transaction Lambda Code](./amazonkms/transaction.js)
+  - [Hedera Signing Code](./amazonkms/signing.js)
+
 ## 🤖 AI Agent (DeSmond)
 
-The EffiSend platform features DeSmond, a sophisticated, multilingual AI concierge built with Langchain. DeSmond acts as a bridge between natural language and complex on-chain/off-chain operations, allowing users to manage their finances and navigate the Tokyo Dome City ecosystem through simple conversation.
+The EffiSend platform features DeSmond, a sophisticated, multilingual AI concierge built with LangChain. DeSmond acts as a bridge between natural language and complex on-chain/off-chain operations, allowing users to manage their finances and navigate the Tokyo Dome City ecosystem through simple conversation.
 
+<p align="center">
 <img src="./Images/desmond1.png" width="32%"> <img src="./Images/desmond2.png" width="32%">
+</p>
 
 ### Core Architecture & Tech Stack:
 
@@ -235,7 +257,6 @@ DeSmond uses native tool-calling to execute real-time logic. Its capabilities ar
 A unique feature of DeSmond is the ability to bridge liquidity. When a user requests to fund their MetaMask Card, the agent triggers a two-step process: it executes a transfer on Hedera via HTS and simultaneously triggers a contract interaction on Linea to release funds to the card.
 
 ```javascript
-
 const transaction = await new TransferTransaction()
     .addTokenTransfer("0.0.456858", accountId, -amount * Math.pow(10, 6)) // USDC HTS
     .addTokenTransfer("0.0.456858", cloudAccountId, amount * Math.pow(10, 6))
@@ -249,11 +270,17 @@ const transactionLinea = await contract.transfer(to, parseUnits(amount, 6));
 await transactionLinea.wait();
 ```
 
+All the technical details can be found here:
+
+  - [DeSmond Code](./agent/agent.js)
+
 ## 🎫 On-Chain NFT Passes & POAPs
 
 EffiSend transforms digital ticketing and event participation into a seamless on-chain experience. By leveraging the Hedera Token Service (HTS), the platform manages digital passes and POAPs (Proof of Attendance Protocols) that users can collect within the Tokyo Dome City ecosystem.
 
+<p align="center">
 <img src="./Images/nft1.png" width="32%"> <img src="./Images/nft2.png" width="32%"> <img src="./Images/nft3.png" width="32%">
+</p>
 
 These passes are more than just images; they are verifiable assets that live on the Hedera Mainnet, providing users with a permanent record of their visits and exclusive access to gated areas or rewards.
 
@@ -264,12 +291,18 @@ The system is split into a robust retrieval engine on the frontend and an automa
 1.  **Real-Time Discovery (Mirror Node Integration)**
     Instead of relying on heavy third-party indexers, EffiSend queries the Hedera Mirror Node directly to scan a user's account for specific collections. The frontend processes raw on-chain data, including decoding Base64 metadata and resolving IPFS content to display high-fidelity visuals.
 
+<!-- end list -->
+
   - **Direct Querying**: Fetches NFT serial numbers and metadata directly from the `/api/v1/accounts/{id}/nfts` endpoint.
   - **Metadata Resolution**: Automatically converts `ipfs://` links to public gateways (like IPFS.io) to ensure images load instantly in the mobile UI.
   - **Multichain Support**: While optimized for Hedera, the engine also tracks passes on EVM-compatible networks (like Monad/Chain 143) using specialized chain adapters.
 
+<!-- end list -->
+
 2.  **Automated Airdrops (TokenAirdropTransaction)**
     To ensure a frictionless user experience, EffiSend utilizes the native Hedera Token Airdrop feature. This allows the system to send passes to users even if they haven't manually "associated" the token yet, significantly reducing the barrier to entry for non-crypto-native users.
+
+<!-- end list -->
 
   - **Cloud Wallet Management**: An automated backend (AWS Lambda) monitors a central "Cloud Wallet" for available serial numbers.
   - **Ownership Verification**: Before sending, the system checks the Mirror Node to ensure the user doesn't already own the specific pass, preventing double-claims.
@@ -283,7 +316,7 @@ The system is split into a robust retrieval engine on the frontend and an automa
 // Fetching and parsing NFT metadata from Mirror Node (tab5.js)
 let metadataUrl = decodeBase64(nft.metadata);
 if (metadataUrl.startsWith("ipfs://")) {
-    metadataUrl = metadataUrl.replace("ipfs://", "[https://ipfs.io/ipfs/](https://ipfs.io/ipfs/)");
+    metadataUrl = metadataUrl.replace("ipfs://", "https://ipfs.io/ipfs/");
 }
 const metaRes = await fetch(metadataUrl);
 const metaJSON = await metaRes.json();
@@ -310,19 +343,26 @@ const txResponse = await signedTx.execute(client);
 const receipt = await txResponse.getReceipt(client);
 ```
 
-## 🎟️ Try It Now: Claim Your Exclusive NFT Pass\!
+All the technical details can be found here:
+
+  - [NFT & Passes Code](./effisend-hedera/src/app/(screens)/tabs/tab5.js)
+
+## 🎟️ Try It Now: Claim Your Exclusive NFT Pass!
 
 Ready to experience the future of digital ticketing? You can test the automated Hedera Token Airdrop flow right now and mint a special Tokyo Dome City POAP directly to your new wallet.
 
 **1. Create Your Seedless Wallet**
 Launch the EffiSend app and complete the quick **Face-ID** onboarding to instantly generate your secure, biometric-linked Hedera account.
 
+<p align="center">
 <img src="./Images/face1.png" width="20%"> <img src="./Images/face2.png" width="20%"> <img src="./Images/face3.png" width="20%">
+</p>
 
 **2. Access the Claim Portal**
 Depending on your onboarded device, navigate to our dedicated NFT claim page:
 
-  * 🖥️ **Desktop:** Visit [https://effisend-tdc.expo.app/claimnft](https://effisend-tdc.expo.app/claimnft)
+  * 🖥️ **Desktop:** Visit [Claim Page](https://effisend-tdc.expo.app/claimnft)
+
   * 📱 **Mobile:** Scan the QR code below with your phone's camera:
 
     <img src="./Images/qr-code.png" width="40%">
