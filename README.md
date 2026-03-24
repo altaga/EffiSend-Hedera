@@ -9,7 +9,9 @@ EffiSend is a cutting-edge identity, multichain wallet, and payments platform bu
 ## 🔗 Fast Links
 
   - **WEB DAPP:** [LINK](https://effisend-tdc.expo.app/)
-  - **VIDEO DEMO:** [LINK](pending...)
+  - **PROOF OF ON-CHAIN ACTIVITY:** [LINK](https://hashscan.io/mainnet/account/0.0.9520271/operations)
+  - **VIDEO DEMO:** [LINK](https://youtu.be/67Rny1j34eU)
+  - **GET YOUR NFT:** [SECTION](#️-try-it-now-claim-your-exclusive-nft-pass)
 
 ## ⚙️ System Architecture & Tech Stack
 
